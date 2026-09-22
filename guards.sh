@@ -9,11 +9,11 @@ release_lock() { rm -rf "$BK/.lock"; }
 
 check_wifi() {
   [ "$REQUIRE_WIFI" = "1" ] || return 0
-  termux-wifi-connectioninfo 2>/dev/null | grep -q '"supplicant_state": *"COMPLETED"'
+  timeout 10 termux-wifi-connectioninfo 2>/dev/null | grep -q '"supplicant_state": *"COMPLETED"'
 }
 
 check_battery() {
-  local j=$(termux-battery-status 2>/dev/null)
+  local j=$(timeout 10 termux-battery-status 2>/dev/null)
   local p=$(echo "$j" | jq -r .percentage 2>/dev/null)
   local s=$(echo "$j" | jq -r .status 2>/dev/null)
   [ "$s" = "CHARGING" ] || [ "$s" = "FULL" ] && return 0
