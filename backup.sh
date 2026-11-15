@@ -21,6 +21,19 @@ if ! check_lock; then
 fi
 trap release_lock EXIT
 
+# Storage guard: do not start an upload that cannot fit in the Google storage plan.
+NEED=$(find "$SRC" -type f ! -name .nomedia -printf '%s\n' | awk '{s+=$1} END {printf "%.0f", s}')
+FREE=$(timeout 60 rclone about "${DST%%:*}:" --json 2>/dev/null | jq -r '.free // empty')
+if [ -n "$FREE" ]; then
+  if [ $((NEED + ${MIN_FREE_GB:-10} * 1073741824)) -gt "$FREE" ]; then
+    termux-notification -t "Drive is almost full - NOT uploading" \
+      -c "Need $((NEED / 1073741824)) GB, free $((FREE / 1073741824)) GB. Free up space or enlarge the plan."
+    exit 1
+  fi
+else
+  termux-notification -t "Could not read Drive free space" -c "Uploading anyway - check the storage plan"
+fi
+
 TS=$(date +%Y-%m-%d_%H%M)
 mkdir -p "$BK/logs" "$BK/reports"
 MAP="$BK/reports/$TS-targets.tsv"

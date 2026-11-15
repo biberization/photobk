@@ -32,3 +32,7 @@ Each run records its mapping in `reports/<timestamp>-targets.tsv`.
 
 The Drive-side dedupe step was removed from backup: `rclone copy` never creates
 duplicates, and dedupe was the only step that deleted anything.
+
+## Storage guard
+Before uploading, backup.sh compares the size of ToBackup with the free space Google reports
+for the account and refuses to start if less than `MIN_FREE_GB` (default 10) would remain.
